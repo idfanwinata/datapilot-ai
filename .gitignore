@@ -1,0 +1,25 @@
+
+# Python environment
+.venv/
+.venv-1/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+
+# Local databases and logs
+*.db
+*.sqlite3
+*.log
+
+# Local vector database
+chroma_db/
+
+# IDE settings
+.vscode/

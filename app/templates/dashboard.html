@@ -1,0 +1,1641 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpsPilot AI | Machine Failure Analysis</title>
+
+    <style>
+      :root {
+        --bg: #f3f6fb;
+        --surface: #ffffff;
+        --navy: #17243b;
+        --primary: #2563eb;
+        --text: #1e293b;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --green: #15803d;
+        --red: #b91c1c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .layout {
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 235px;
+        background: var(--navy);
+        color: white;
+        padding: 28px 18px;
+      }
+
+      .brand {
+        font-size: 23px;
+        font-weight: 750;
+        letter-spacing: -0.5px;
+      }
+
+      .brand span {
+        color: #60a5fa;
+      }
+
+      .brand-subtitle {
+        color: #aab7cc;
+        font-size: 12px;
+        margin-top: 7px;
+      }
+
+      .nav-label {
+        color: #8fa0b9;
+        font-size: 11px;
+        font-weight: 700;
+        margin: 38px 0 12px;
+        letter-spacing: 1px;
+      }
+
+      .nav-item {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        font: inherit;
+        font-size: 14px;
+        padding: 12px;
+        margin-bottom: 7px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .nav-item:hover,
+      .nav-item:focus-visible {
+        background: #263c5c;
+        outline: 2px solid #60a5fa;
+        outline-offset: 1px;
+      }
+
+      .nav-item.active {
+        background: #263c5c;
+        color: #ffffff;
+      }
+
+      .sidebar-footer {
+        position: absolute;
+        bottom: 25px;
+        left: 20px;
+        right: 20px;
+        color: #aab7cc;
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      #dashboardSection,
+      #diagnosticsSection,
+      #historySection,
+      #knowledgeSection,
+      #analyticsSection {
+        scroll-margin-top: 22px;
+      }
+
+      main {
+        margin-left: 235px;
+        padding: 32px;
+        max-width: 1600px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        font-size: 27px;
+        margin: 0 0 7px;
+      }
+
+      h2 {
+        font-size: 17px;
+        margin: 0;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #dcfce7;
+        color: #166534;
+        border-radius: 20px;
+        padding: 8px 12px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #16a34a;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card,
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        padding: 22px;
+        box-shadow: 0 3px 12px rgb(15 23 42 / 3%);
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .stat-value {
+        font-size: 27px;
+        font-weight: 750;
+        margin: 12px 0 5px;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+
+      .panel-header .muted {
+        margin-top: 6px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 650;
+        margin-bottom: 8px;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 12px 13px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: white;
+        color: var(--text);
+        font: inherit;
+        font-size: 14px;
+        margin-bottom: 18px;
+      }
+
+      textarea {
+        min-height: 130px;
+        resize: vertical;
+        line-height: 1.6;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: 2px solid #bfdbfe;
+        border-color: var(--primary);
+      }
+
+      button {
+        border: 0;
+        border-radius: 8px;
+        padding: 11px 16px;
+        font-weight: 650;
+        cursor: pointer;
+        font-size: 13px;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .btn-primary {
+        width: 100%;
+        color: white;
+        background: var(--primary);
+        padding: 13px;
+      }
+
+      .btn-secondary {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+
+      .btn-plain {
+        background: transparent;
+        color: var(--primary);
+        padding: 6px 8px;
+      }
+
+      .result-placeholder {
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        text-align: center;
+        padding: 35px 18px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.8;
+      }
+
+      .result-section {
+        margin-bottom: 22px;
+      }
+
+      .result-section h3 {
+        font-size: 13px;
+        margin: 0 0 9px;
+      }
+
+      .result-section p,
+      .result-section li {
+        font-size: 13px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+      }
+
+      .result-section ul {
+        padding-left: 20px;
+      }
+
+      .result-tag {
+        display: inline-block;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-radius: 5px;
+        padding: 5px 8px;
+        font-size: 11px;
+        margin-bottom: 14px;
+      }
+
+      .sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      .source-tag {
+        background: #f1f5f9;
+        padding: 7px 9px;
+        border-radius: 6px;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+      }
+
+      .history-panel {
+        margin-top: 22px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 13px 10px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 650;
+        background: #f8fafc;
+      }
+
+      .message {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+      }
+
+      .message.error {
+        background: #fef2f2;
+        color: var(--red);
+      }
+
+      .message.success {
+        background: #f0fdf4;
+        color: var(--green);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .footer {
+        margin-top: 28px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .analytics-panel {
+        margin-top: 24px;
+      }
+      .analytics-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .analytics-form-grid > div {
+        min-width: 0;
+      }
+      .analytics-kpis {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      .analytics-kpi {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        min-width: 0;
+      }
+      .analytics-kpi .stat-value {
+        font-size: 23px;
+        overflow-wrap: anywhere;
+      }
+      .analytics-chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 18px;
+      }
+      .chart-box {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        min-width: 0;
+        background: #fff;
+      }
+      .chart-box h3 {
+        font-size: 14px;
+        margin: 0 0 12px;
+      }
+      .chart-box svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .chart-note {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .ai-insight-panel {
+        margin: 22px 0;
+        padding: 20px;
+        border: 1px solid #c7d2fe;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #f8faff, #ffffff);
+      }
+      .ai-insight-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .ai-insight-header h3 {
+        margin: 0 0 6px;
+        color: #172554;
+      }
+      .ai-status {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: #e0e7ff;
+        color: #3730a3;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .ai-status.failed {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .ai-status.loading {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .ai-insight-content {
+        margin-top: 14px;
+        color: #334155;
+        line-height: 1.65;
+      }
+      .ai-insight-content h4 {
+        margin: 18px 0 6px;
+        color: #0f172a;
+      }
+      .ai-insight-content ul {
+        margin: 6px 0 12px;
+        padding-left: 22px;
+      }
+      .ai-action-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .ai-action-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px;
+        background: #fff;
+      }
+      .ai-action-card strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .ai-priority {
+        font-size: 11px;
+        font-weight: 800;
+        border-radius: 6px;
+        padding: 3px 7px;
+        background: #fee2e2;
+        color: #991b1b;
+        display: inline-block;
+        margin-bottom: 8px;
+      }
+
+      .analytics-table {
+        margin-top: 18px;
+      }
+      .analytics-table table {
+        min-width: 520px;
+      }
+      .field-help {
+        margin-top: -12px;
+        margin-bottom: 14px;
+      }
+      @media (max-width: 900px) {
+        .analytics-kpis {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .analytics-chart-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 650px) {
+        .analytics-form-grid {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+        .analytics-kpis {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 1000px) {
+        .sidebar {
+          width: 190px;
+        }
+
+        main {
+          margin-left: 190px;
+          padding: 22px;
+        }
+
+        .content-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 650px) {
+        .sidebar {
+          position: static;
+          width: 100%;
+          padding: 18px;
+        }
+
+        .nav-label {
+          margin-top: 20px;
+        }
+
+        .sidebar-footer {
+          display: none;
+        }
+
+        .sidebar .nav-item {
+          display: block;
+        }
+
+        main {
+          margin-left: 0;
+          padding: 17px;
+        }
+
+        .stats {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+        }
+
+        h1 {
+          font-size: 23px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">OpsPilot<span> AI</span></div>
+        <div class="brand-subtitle">Technical Diagnostic Assistant</div>
+
+        <div class="nav-label">WORKSPACE</div>
+        <button
+          class="nav-item active"
+          type="button"
+          data-target="dashboardSection"
+        >
+          ◈ &nbsp; Dashboard
+        </button>
+        <button class="nav-item" type="button" data-target="diagnosticsSection">
+          ⌕ &nbsp; Diagnostics
+        </button>
+        <button class="nav-item" type="button" data-target="historySection">
+          ◷ &nbsp; History
+        </button>
+        <button class="nav-item" type="button" data-target="knowledgeSection">
+          ▤ &nbsp; Knowledge Base
+        </button>
+        <button class="nav-item" type="button" data-target="analyticsSection">
+          ▥ &nbsp; DataPilot Analytics
+        </button>
+
+        <div class="sidebar-footer">
+          <div>AI-powered troubleshooting</div>
+          <div>FastAPI · Gemini · RAG</div>
+        </div>
+      </aside>
+
+      <main>
+        <section id="dashboardSection">
+          <header class="topbar">
+            <div>
+              <h1>Machine Failure Analysis</h1>
+              <div class="muted">
+                Analisis pola kerusakan mesin dari data operasional untuk
+                menemukan masalah dominan dan membantu menentukan prioritas
+                troubleshooting.
+              </div>
+            </div>
+
+            <div class="status">
+              <span class="status-dot"></span>
+              API Connected
+            </div>
+          </header>
+        </section>
+
+        <section class="panel analytics-panel" id="analyticsSection">
+          <div class="panel-header">
+            <div>
+              <h2>DataPilot AI · Analisis Kerusakan Mesin</h2>
+              <div class="muted">
+                Unggah data laporan gangguan atau kerusakan dari Excel/CSV untuk
+                melihat pola kendala, model mesin yang terdampak, Pareto
+                kerusakan, dan tren bulanan. Analisis statistik dihitung
+                menggunakan Python.
+              </div>
+            </div>
+          </div>
+
+          <div id="analyticsMessage" class="hidden"></div>
+
+          <form id="analyticsForm">
+            <label for="analyticsFile">File Excel / CSV</label>
+            <input
+              id="analyticsFile"
+              name="file"
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              required
+            />
+            <div class="muted field-help">
+              Format yang didukung mengikuti file Rekap CM RBG: No, Tipe, Date
+              Start, Date End, Kendala, Update, Status, dan kolom lainnya. Untuk
+              Excel, API membaca sheet pertama.
+            </div>
+
+            <div class="analytics-form-grid">
+              <div>
+                <label for="analyticsErrorCol"
+                  >Kolom Kendala / Kode Kerusakan</label
+                >
+                <input
+                  id="analyticsErrorCol"
+                  name="error_col"
+                  value="Kendala"
+                  required
+                />
+              </div>
+              <div>
+                <label for="analyticsMachineCol"
+                  >Kolom Tipe / Model Mesin</label
+                >
+                <input
+                  id="analyticsMachineCol"
+                  name="machine_col"
+                  value="Tipe"
+                  required
+                />
+              </div>
+              <div>
+                <label for="analyticsDateCol"
+                  >Kolom Tanggal Mulai (opsional)</label
+                >
+                <input
+                  id="analyticsDateCol"
+                  name="date_col"
+                  value="Date Start"
+                />
+              </div>
+            </div>
+            <button id="analyticsButton" class="btn-primary" type="submit">
+              Analisis Kerusakan Mesin
+            </button>
+          </form>
+
+          <div id="analyticsResults" class="hidden">
+            <div class="analytics-kpis">
+              <div class="analytics-kpi">
+                <div class="stat-label">Total Kasus Kerusakan</div>
+                <div class="stat-value" id="analyticsTotal">-</div>
+                <div class="muted">
+                  Jumlah baris sumber dengan Kendala atau Update yang terisi
+                </div>
+              </div>
+              <div class="analytics-kpi">
+                <div class="stat-label">Kategori Kendala Unik</div>
+                <div class="stat-value" id="analyticsDone">-</div>
+                <div class="muted" id="analyticsDoneNote">
+                  Ditemukan dari Kendala dan Update
+                </div>
+              </div>
+              <div class="analytics-kpi">
+                <div class="stat-label">Kendala Paling Sering</div>
+                <div class="stat-value" id="analyticsOpen">-</div>
+                <div class="muted" id="analyticsOpenNote">
+                  Frekuensi kemunculan
+                </div>
+              </div>
+              <div class="analytics-kpi">
+                <div class="stat-label">Median Durasi Penyelesaian</div>
+                <div class="stat-value" id="analyticsMedianTime">-</div>
+                <div class="muted" id="analyticsDurationNote">
+                  Jam dari Date Start ke Date End
+                </div>
+              </div>
+            </div>
+            <p class="chart-note">
+              Durasi dihitung dari Date End dikurangi Date Start. Untuk menjaga
+              hasil tetap representatif, ringkasan durasi hanya memasukkan
+              selisih 0–30 hari; baris tanpa Date End atau dengan durasi negatif
+              tidak dihitung.
+            </p>
+
+            <section
+              id="aiInsightPanel"
+              class="ai-insight-panel"
+              aria-live="polite"
+            >
+              <div class="ai-insight-header">
+                <div>
+                  <h3>DataPilot AI · Insight Analisis</h3>
+                  <p class="chart-note">
+                    Gemini menginterpretasikan statistik yang dihitung Python.
+                  </p>
+                </div>
+                <span id="aiInsightStatus" class="ai-status"
+                  >Menunggu analisis</span
+                >
+              </div>
+              <div id="aiInsightContent" class="ai-insight-content">
+                Jalankan analisis untuk menghasilkan ringkasan AI, temuan utama,
+                dan rekomendasi prioritas.
+              </div>
+            </section>
+
+            <div class="analytics-chart-grid">
+              <div class="chart-box">
+                <h3>Kode Error / Tema Kerusakan Paling Sering</h3>
+                <div id="errorChart"></div>
+              </div>
+              <div class="chart-box">
+                <h3>Distribusi Tipe Mesin</h3>
+                <div id="machineChart"></div>
+              </div>
+              <div class="chart-box">
+                <h3>Pareto Kode Error / Tema</h3>
+                <div id="paretoChart"></div>
+                <p class="chart-note">
+                  Garis menunjukkan persentase kumulatif kasus. Gunakan untuk
+                  mengidentifikasi error yang paling banyak berkontribusi.
+                </p>
+              </div>
+              <div class="chart-box">
+                <h3>Tren Kasus Berdasarkan Date Start</h3>
+                <div id="monthlyChart"></div>
+                <p id="monthlyNote" class="chart-note"></p>
+              </div>
+              <div class="chart-box">
+                <h3>Distribusi Durasi Penyelesaian</h3>
+                <div id="durationChart"></div>
+                <p class="chart-note">
+                  Distribusi berdasarkan selisih Date End − Date Start untuk
+                  durasi valid 0–30 hari.
+                </p>
+              </div>
+            </div>
+
+            <div class="analytics-table">
+              <h3>Rekap Frekuensi Kode Error / Tema Kerusakan</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Kode Error / Tema Kerusakan</th>
+                      <th>Frekuensi Tiket</th>
+                      <th>Percentage</th>
+                      <th>Cumulative %</th>
+                    </tr>
+                  </thead>
+                  <tbody id="errorSummaryBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div style="margin-top: 18px">
+              <button
+                id="downloadAnalytics"
+                type="button"
+                class="btn-secondary"
+              >
+                Unduh Rekap Kerusakan (CSV)
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="diagnosticsSection">
+          <section class="stats">
+            <div class="stat-card">
+              <div class="stat-label">Total Diagnosis</div>
+              <div class="stat-value" id="totalHistory">-</div>
+              <div class="muted">Catatan yang tersimpan</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Application</div>
+              <div class="stat-value">RBG-100</div>
+              <div class="muted">Cash processing equipment</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-label">Analysis Engine</div>
+              <div class="stat-value">RAG AI</div>
+              <div class="muted">Knowledge-based troubleshooting</div>
+            </div>
+          </section>
+
+          <section class="content-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>New Diagnostic</h2>
+                  <div class="muted">Masukkan error code dan gejala mesin.</div>
+                </div>
+              </div>
+
+              <div id="formMessage" class="hidden"></div>
+
+              <form id="diagnosticForm">
+                <label for="application">Application / Machine</label>
+                <input
+                  id="application"
+                  name="application"
+                  value="RBG-100"
+                  required
+                />
+
+                <label for="errorLog">Error Code & Symptoms</label>
+                <textarea
+                  id="errorLog"
+                  name="error_log"
+                  placeholder="Contoh: Error code 6605 + 200. Mesin mengalami jammed saat proses penarikan uang."
+                  required
+                ></textarea>
+
+                <button id="analyzeButton" class="btn-primary" type="submit">
+                  Analyze Error
+                </button>
+              </form>
+
+              <p class="muted">
+                Hasil AI merupakan indikasi awal. Verifikasi diagnosis dan
+                lakukan tindakan sesuai SOP teknisi yang berwenang.
+              </p>
+            </div>
+
+            <div class="panel" id="knowledgeSection">
+              <div class="panel-header">
+                <div>
+                  <h2>Analysis Result</h2>
+                  <div class="muted">
+                    Hasil analisis dan referensi knowledge base.
+                  </div>
+                </div>
+              </div>
+
+              <div id="resultPlaceholder" class="result-placeholder">
+                <div style="font-size: 30px; margin-bottom: 10px">⌕</div>
+                <strong>Belum ada hasil diagnosis</strong>
+                <div>Masukkan kode error untuk memulai analisis.</div>
+              </div>
+
+              <div id="resultContent" class="hidden"></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="panel history-panel" id="historySection">
+          <div class="panel-header">
+            <div>
+              <h2>Diagnosis History</h2>
+              <div class="muted">
+                Riwayat analisis yang tersimpan di database.
+              </div>
+            </div>
+
+            <button type="button" class="btn-secondary" id="refreshHistory">
+              Refresh History
+            </button>
+          </div>
+
+          <div id="historyMessage" class="muted"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Application</th>
+                  <th>Error Log</th>
+                  <th>Created At</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+
+              <tbody id="historyBody">
+                <tr>
+                  <td colspan="5">Memuat riwayat...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="footer">
+          OpsPilot AI · Technical Support & Troubleshooting Assistant
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Sidebar navigation: scroll to the requested section and highlight the active menu.
+      document
+        .querySelectorAll(".sidebar .nav-item[data-target]")
+        .forEach((item) => {
+          item.addEventListener("click", () => {
+            const targetId = item.dataset.target;
+            const target = document.getElementById(targetId);
+            if (!target) {
+              console.warn(`Target navigasi tidak ditemukan: ${targetId}`);
+              return;
+            }
+            document
+              .querySelectorAll(".sidebar .nav-item")
+              .forEach((nav) => nav.classList.remove("active"));
+            item.classList.add("active");
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        });
+
+      const form = document.getElementById("diagnosticForm");
+      const analyzeButton = document.getElementById("analyzeButton");
+      const formMessage = document.getElementById("formMessage");
+      const resultPlaceholder = document.getElementById("resultPlaceholder");
+      const resultContent = document.getElementById("resultContent");
+      const historyBody = document.getElementById("historyBody");
+      const historyMessage = document.getElementById("historyMessage");
+      const totalHistory = document.getElementById("totalHistory");
+
+      function showMessage(element, message, type) {
+        element.textContent = message;
+        element.className = `message ${type}`;
+      }
+
+      function addTextElement(parent, tag, text, className = "") {
+        const element = document.createElement(tag);
+        element.textContent = text || "-";
+
+        if (className) {
+          element.className = className;
+        }
+
+        parent.appendChild(element);
+        return element;
+      }
+
+      function renderResult(result) {
+        resultPlaceholder.classList.add("hidden");
+        resultContent.classList.remove("hidden");
+        resultContent.replaceChildren();
+
+        const analysis = result.analysis || result;
+
+        addTextElement(
+          resultContent,
+          "span",
+          analysis.analysis_type || "RAG",
+          "result-tag",
+        );
+
+        const summary = document.createElement("div");
+        summary.className = "result-section";
+        addTextElement(summary, "h3", "Error Summary");
+        addTextElement(summary, "p", analysis.error_summary);
+        resultContent.appendChild(summary);
+
+        const cause = document.createElement("div");
+        cause.className = "result-section";
+        addTextElement(cause, "h3", "Possible Cause");
+        addTextElement(cause, "p", analysis.possible_cause);
+        resultContent.appendChild(cause);
+
+        const steps = document.createElement("div");
+        steps.className = "result-section";
+        addTextElement(steps, "h3", "Recommended Troubleshooting");
+
+        const list = document.createElement("ol");
+
+        (analysis.recommended_steps || []).forEach((step) => {
+          addTextElement(list, "li", step);
+        });
+
+        steps.appendChild(list);
+        resultContent.appendChild(steps);
+
+        const sources = document.createElement("div");
+        sources.className = "result-section";
+        addTextElement(sources, "h3", "Knowledge Sources");
+
+        const sourceList = document.createElement("div");
+        sourceList.className = "sources";
+
+        (result.sources || []).forEach((source) => {
+          addTextElement(sourceList, "span", source, "source-tag");
+        });
+
+        if (!result.sources || result.sources.length === 0) {
+          addTextElement(
+            sourceList,
+            "span",
+            "Tidak ada sumber tercantum",
+            "source-tag",
+          );
+        }
+
+        sources.appendChild(sourceList);
+        resultContent.appendChild(sources);
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const application = document.getElementById("application").value.trim();
+
+        const errorLog = document.getElementById("errorLog").value.trim();
+
+        if (!application || !errorLog) {
+          showMessage(
+            formMessage,
+            "Application dan error log wajib diisi.",
+            "error",
+          );
+          return;
+        }
+
+        analyzeButton.disabled = true;
+        analyzeButton.textContent = "Analyzing...";
+        formMessage.className = "hidden";
+
+        try {
+          const response = await fetch("/diagnostics/analyze-rag", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              application: application,
+              error_log: errorLog,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.detail || `Request gagal (${response.status})`,
+            );
+          }
+
+          renderResult(data);
+
+          showMessage(
+            formMessage,
+            "Analisis berhasil. Hasil diagnosis telah diproses.",
+            "success",
+          );
+
+          await loadHistory();
+        } catch (error) {
+          showMessage(
+            formMessage,
+            `Gagal menganalisis: ${error.message}`,
+            "error",
+          );
+        } finally {
+          analyzeButton.disabled = false;
+          analyzeButton.textContent = "Analyze Error";
+        }
+      });
+
+      async function loadHistory() {
+        historyMessage.textContent = "Memuat riwayat...";
+        historyBody.replaceChildren();
+
+        try {
+          const response = await fetch("/diagnostics/history?limit=100");
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.detail || `Request gagal (${response.status})`,
+            );
+          }
+
+          const records = data.history || [];
+
+          totalHistory.textContent = data.total ?? records.length;
+
+          if (records.length === 0) {
+            const row = historyBody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 5;
+            cell.textContent = "Belum ada riwayat diagnosis.";
+          } else {
+            records.forEach((record) => {
+              const row = historyBody.insertRow();
+
+              row.insertCell().textContent = record.id;
+              row.insertCell().textContent = record.application;
+              row.insertCell().textContent = record.error_log;
+
+              row.insertCell().textContent = record.created_at
+                ? new Date(record.created_at).toLocaleString("id-ID")
+                : "-";
+
+              const actionCell = row.insertCell();
+              const button = document.createElement("button");
+
+              button.type = "button";
+              button.className = "btn-plain";
+              button.textContent = "View Detail";
+
+              button.addEventListener("click", () => {
+                viewHistoryDetail(record.id);
+              });
+
+              actionCell.appendChild(button);
+            });
+          }
+
+          historyMessage.textContent = `${records.length} catatan ditampilkan.`;
+        } catch (error) {
+          totalHistory.textContent = "-";
+          historyMessage.textContent = `Gagal memuat riwayat: ${error.message}`;
+
+          const row = historyBody.insertRow();
+          const cell = row.insertCell();
+          cell.colSpan = 5;
+          cell.textContent = "Periksa koneksi API dan endpoint riwayat.";
+        }
+      }
+
+      async function viewHistoryDetail(id) {
+        historyMessage.textContent = `Memuat detail diagnosis #${id}...`;
+
+        try {
+          const response = await fetch(
+            `/diagnostics/history/${encodeURIComponent(id)}`,
+          );
+
+          const responseText = await response.text();
+
+          let data;
+
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            throw new Error(
+              `Server mengembalikan respons bukan JSON (HTTP ${response.status}). Periksa terminal Uvicorn.`,
+            );
+          }
+
+          if (!response.ok) {
+            throw new Error(
+              data.detail || `Request gagal (${response.status})`,
+            );
+          }
+
+          renderResult({
+            analysis: data.analysis,
+            sources: data.sources,
+          });
+
+          showMessage(
+            formMessage,
+            `Menampilkan riwayat diagnosis #${id}.`,
+            "success",
+          );
+
+          document.getElementById("errorLog").value = data.error_log || "";
+          document.getElementById("application").value =
+            data.application || "RBG-100";
+
+          document.getElementById("resultContent").scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+
+          historyMessage.textContent = `Detail diagnosis #${id} berhasil dimuat.`;
+        } catch (error) {
+          historyMessage.textContent = `Gagal membuka detail: ${error.message}`;
+        }
+      }
+
+      document
+        .getElementById("refreshHistory")
+        .addEventListener("click", loadHistory);
+
+      loadHistory();
+
+      const analyticsForm = document.getElementById("analyticsForm");
+      const analyticsButton = document.getElementById("analyticsButton");
+      const analyticsMessage = document.getElementById("analyticsMessage");
+      const analyticsResults = document.getElementById("analyticsResults");
+      let latestErrorSummary = [];
+
+      function escapeSvgText(value) {
+        return String(value ?? "").replace(
+          /[&<>"']/g,
+          (char) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[char],
+        );
+      }
+
+      function renderBarChart(
+        containerId,
+        rows,
+        labelKey,
+        valueKey,
+        limit = 10,
+      ) {
+        const container = document.getElementById(containerId);
+        container.replaceChildren();
+
+        const data = (rows || []).slice(0, limit);
+        if (!data.length) {
+          container.textContent = "Tidak ada data untuk ditampilkan.";
+          return;
+        }
+
+        const width = 520;
+        const left = 150;
+        const right = 42;
+        const top = 10;
+        const barHeight = 24;
+        const gap = 12;
+        const height = top + data.length * (barHeight + gap) + 12;
+        const maxValue = Math.max(
+          ...data.map((row) => Number(row[valueKey]) || 0),
+          1,
+        );
+        const plotWidth = width - left - right;
+
+        let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeSvgText(containerId)}">`;
+        data.forEach((row, index) => {
+          const y = top + index * (barHeight + gap);
+          const value = Number(row[valueKey]) || 0;
+          const barWidth = (value / maxValue) * plotWidth;
+          svg += `<text x="${left - 8}" y="${y + 16}" text-anchor="end" font-size="11" fill="#475569">${escapeSvgText(row[labelKey])}</text>`;
+          svg += `<rect x="${left}" y="${y}" width="${Math.max(barWidth, 1)}" height="${barHeight}" rx="4" fill="#3b82f6"></rect>`;
+          svg += `<text x="${Math.min(left + barWidth + 6, width - 30)}" y="${y + 16}" font-size="11" fill="#334155">${value}</text>`;
+        });
+        svg += "</svg>";
+        container.innerHTML = svg;
+      }
+
+      function renderPareto(rows) {
+        const container = document.getElementById("paretoChart");
+        container.replaceChildren();
+        const data = rows || [];
+        if (!data.length) {
+          container.textContent = "Tidak ada data Pareto.";
+          return;
+        }
+
+        const width = 520,
+          height = 250;
+        const left = 42,
+          right = 42,
+          top = 18,
+          bottom = 58;
+        const plotW = width - left - right;
+        const plotH = height - top - bottom;
+        const maxFreq = Math.max(
+          ...data.map((r) => Number(r.frequency) || 0),
+          1,
+        );
+        const step = plotW / data.length;
+        let cumulative = 0;
+        const points = [];
+
+        let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Pareto chart">`;
+        [0, 0.25, 0.5, 0.75, 1].forEach((p) => {
+          const y = top + plotH * (1 - p);
+          svg += `<line x1="${left}" y1="${y}" x2="${width - right}" y2="${y}" stroke="#e2e8f0" />`;
+          svg += `<text x="${left - 7}" y="${y + 4}" text-anchor="end" font-size="10" fill="#64748b">${Math.round(maxFreq * p)}</text>`;
+          svg += `<text x="${width - right + 7}" y="${y + 4}" font-size="10" fill="#64748b">${Math.round(p * 100)}%</text>`;
+        });
+        data.forEach((row, i) => {
+          const freq = Number(row.frequency) || 0;
+          cumulative += freq;
+          const x = left + i * step + step * 0.15;
+          const barW = step * 0.7;
+          const barH = (freq / maxFreq) * plotH;
+          const y = top + plotH - barH;
+          svg += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="2" fill="#60a5fa"></rect>`;
+          const pct = Number(
+            row.cumulative_percentage ??
+              (cumulative /
+                data.reduce((sum, r) => sum + (Number(r.frequency) || 0), 0)) *
+                100,
+          );
+          points.push([
+            left + i * step + step / 2,
+            top + plotH * (1 - pct / 100),
+          ]);
+          svg += `<text x="${left + i * step + step / 2}" y="${height - bottom + 17}" text-anchor="middle" font-size="9" fill="#475569">${escapeSvgText(row.error_code).slice(0, 9)}</text>`;
+        });
+        if (points.length) {
+          svg += `<polyline points="${points.map((p) => p.join(",")).join(" ")}" fill="none" stroke="#dc2626" stroke-width="2.5" />`;
+          points.forEach(
+            ([x, y]) =>
+              (svg += `<circle cx="${x}" cy="${y}" r="3" fill="#dc2626" />`),
+          );
+        }
+        svg += "</svg>";
+        container.innerHTML = svg;
+      }
+
+      function renderMonthly(rows) {
+        const container = document.getElementById("monthlyChart");
+        const note = document.getElementById("monthlyNote");
+        container.replaceChildren();
+        if (!rows || !rows.length) {
+          container.textContent =
+            "Data tanggal tidak tersedia atau tidak dapat dibaca.";
+          note.textContent = "";
+          return;
+        }
+        renderBarChart("monthlyChart", rows, "period", "frequency", 24);
+        note.textContent = `${rows.length} periode bulan berhasil dianalisis.`;
+      }
+
+      function renderAIInsight(insight, status, errorMessage) {
+        const panel = document.getElementById("aiInsightContent");
+        const badge = document.getElementById("aiInsightStatus");
+        panel.replaceChildren();
+        badge.className = "ai-status";
+
+        if (status === "failed" || !insight) {
+          badge.textContent = "AI tidak tersedia";
+          badge.classList.add("failed");
+          const p = document.createElement("p");
+          p.textContent = errorMessage
+            ? `Statistik tetap tersedia. Detail: ${errorMessage}`
+            : "Statistik berhasil dihitung, tetapi AI tidak mengembalikan insight. Periksa API key, model, kuota, dan terminal server.";
+          panel.appendChild(p);
+          return;
+        }
+
+        badge.textContent = "Insight selesai";
+        const addText = (tag, text, parent = panel) => {
+          if (!text) return;
+          const el = document.createElement(tag);
+          el.textContent = String(text);
+          parent.appendChild(el);
+        };
+        const addList = (title, items) => {
+          if (!Array.isArray(items) || !items.length) return;
+          addText("h4", title);
+          const ul = document.createElement("ul");
+          items.forEach((item) => {
+            const li = document.createElement("li");
+            if (typeof item === "string") {
+              li.textContent = item;
+            } else {
+              li.textContent = JSON.stringify(item);
+            }
+            ul.appendChild(li);
+          });
+          panel.appendChild(ul);
+        };
+
+        addText("p", insight.summary);
+        addList("Temuan utama", insight.key_findings);
+        addText("h4", "Prioritas tindakan");
+        if (
+          Array.isArray(insight.priority_actions) &&
+          insight.priority_actions.length
+        ) {
+          const grid = document.createElement("div");
+          grid.className = "ai-action-list";
+          insight.priority_actions.forEach((action) => {
+            const card = document.createElement("div");
+            card.className = "ai-action-card";
+            const priority = document.createElement("span");
+            priority.className = "ai-priority";
+            priority.textContent = action.priority || "Prioritas";
+            card.appendChild(priority);
+            addText("strong", action.issue || "Kendala", card);
+            addText("p", action.evidence || "", card);
+            addText("p", `Tindakan: ${action.recommended_action || "-"}`, card);
+            addText("p", `Validasi: ${action.verification || "-"}`, card);
+            grid.appendChild(card);
+          });
+          panel.appendChild(grid);
+        } else {
+          addText(
+            "p",
+            "Belum ada rekomendasi prioritas yang cukup didukung data.",
+          );
+        }
+        addText("h4", "Interpretasi tren");
+        addText("p", insight.trend_interpretation);
+        addText("h4", "Interpretasi durasi");
+        addText("p", insight.duration_interpretation);
+        addList("Keterbatasan data", insight.data_limitations);
+      }
+
+      analyticsForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const file = document.getElementById("analyticsFile").files[0];
+        if (!file) {
+          showMessage(
+            analyticsMessage,
+            "Pilih file Excel atau CSV terlebih dahulu.",
+            "error",
+          );
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append(
+          "error_col",
+          document.getElementById("analyticsErrorCol").value.trim(),
+        );
+        formData.append(
+          "machine_col",
+          document.getElementById("analyticsMachineCol").value.trim(),
+        );
+        formData.append(
+          "date_col",
+          document.getElementById("analyticsDateCol").value.trim(),
+        );
+
+        analyticsButton.disabled = true;
+        analyticsButton.textContent = "Analyzing...";
+        analyticsMessage.className = "hidden";
+
+        try {
+          const response = await fetch("/analytics/analyze", {
+            method: "POST",
+            body: formData,
+          });
+          const responseText = await response.text();
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            throw new Error(
+              `Server mengembalikan respons bukan JSON (HTTP ${response.status}).`,
+            );
+          }
+          if (!response.ok) {
+            throw new Error(
+              data.detail || `Request gagal (${response.status})`,
+            );
+          }
+
+          const result = data.analysis || {};
+          document.getElementById("analyticsTotal").textContent = Number(
+            result.total_cases || 0,
+          ).toLocaleString("id-ID");
+          const errorSummary = result.error_summary || [];
+          latestErrorSummary = errorSummary;
+
+          document.getElementById("analyticsDone").textContent = Number(
+            result.unique_error_codes ?? errorSummary.length,
+          ).toLocaleString("id-ID");
+          document.getElementById("analyticsOpen").textContent =
+            result.top_error_code || "-";
+          document.getElementById("analyticsMedianTime").textContent =
+            result.median_resolution_hours == null
+              ? "-"
+              : `${Number(result.median_resolution_hours).toLocaleString("id-ID", { maximumFractionDigits: 2 })} jam`;
+          document.getElementById("analyticsDoneNote").textContent =
+            "Kode / tema kendala unik";
+          document.getElementById("analyticsOpenNote").textContent =
+            `${Number(result.top_error_frequency || 0).toLocaleString("id-ID")} tiket`;
+          document.getElementById("analyticsDurationNote").textContent =
+            `Rata-rata ${result.mean_resolution_hours == null ? "-" : Number(result.mean_resolution_hours).toLocaleString("id-ID", { maximumFractionDigits: 2 }) + " jam"} · ${result.valid_resolution_rows || 0} sampel valid`;
+
+          renderBarChart(
+            "errorChart",
+            errorSummary,
+            "error_code",
+            "frequency",
+            10,
+          );
+          renderBarChart(
+            "machineChart",
+            result.machine_summary || [],
+            "machine_model",
+            "frequency",
+            12,
+          );
+          renderPareto(errorSummary);
+          renderMonthly(result.monthly_summary || []);
+          renderBarChart(
+            "durationChart",
+            result.duration_summary || [],
+            "period",
+            "frequency",
+            4,
+          );
+
+          const tbody = document.getElementById("errorSummaryBody");
+          tbody.replaceChildren();
+          errorSummary.forEach((row, index) => {
+            const tr = tbody.insertRow();
+            [
+              row.rank || index + 1,
+              row.error_code,
+              Number(row.frequency || 0).toLocaleString("id-ID"),
+              `${Number(row.percentage || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })}%`,
+              `${Number(row.cumulative_percentage || 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })}%`,
+            ].forEach((value) => (tr.insertCell().textContent = value));
+          });
+
+          renderAIInsight(data.ai_insight, data.ai_status, data.ai_error);
+          analyticsResults.classList.remove("hidden");
+          const aiMessage =
+            data.ai_status === "success"
+              ? "Insight AI berhasil dibuat."
+              : "Statistik berhasil dihitung, tetapi insight AI gagal dibuat.";
+          showMessage(
+            analyticsMessage,
+            `Analisis selesai untuk ${data.filename || file.name}. ${aiMessage} ${result.error_count_basis || ""}`,
+            data.ai_status === "success" ? "success" : "error",
+          );
+          analyticsResults.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        } catch (error) {
+          showMessage(
+            analyticsMessage,
+            `Gagal menganalisis data: ${error.message}`,
+            "error",
+          );
+        } finally {
+          analyticsButton.disabled = false;
+          analyticsButton.textContent = "Analisis Kerusakan Mesin";
+        }
+      });
+
+      document
+        .getElementById("downloadAnalytics")
+        .addEventListener("click", () => {
+          if (!latestErrorSummary.length) return;
+          const headers = [
+            "error_code",
+            "frequency",
+            "percentage",
+            "cumulative_percentage",
+          ];
+          const csv = [
+            headers.join(","),
+            ...latestErrorSummary.map((row) =>
+              headers
+                .map((key) => `"${String(row[key] ?? "").replace(/"/g, '""')}"`)
+                .join(","),
+            ),
+          ].join("\r\n");
+          const blob = new Blob(["\uFEFF" + csv], {
+            type: "text/csv;charset=utf-8;",
+          });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "rekap_kerusakan.csv";
+          link.click();
+          URL.revokeObjectURL(url);
+        });
+    </script>
+  </body>
+</html>

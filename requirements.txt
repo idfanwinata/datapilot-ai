@@ -1,0 +1,11 @@
+
+fastapi
+uvicorn[standard]
+pydantic
+pytest
+httpx
+chromadb
+truststore
+
+google-genai
+python-dotenv
